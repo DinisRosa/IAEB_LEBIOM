@@ -1,0 +1,862 @@
+\documentclass[a4paper,12pt]{article}
+
+% Idioma e codificação
+\usepackage[portuguese]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+% Imagens
+\usepackage{graphicx}
+\usepackage{placeins}
+\graphicspath{{imagens/}}
+
+% Margens simpáticas
+\usepackage[a4paper,margin=2.5cm]{geometry}
+% Indentar o primeiro parágrafo após secções
+\usepackage{indentfirst}
+% Cabeçalho e rodapé
+\usepackage{fancyhdr}
+\setlength{\headheight}{14.5pt}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{Aprendizagem Automática}
+\rfoot{\thepage}
+\lfoot{Universidade do Minho}
+\rhead{\today}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+
+\begin{document}
+\begin{titlepage}
+    \centering
+    \includegraphics[width=0.5\textwidth]{eeum_logo}
+
+    {\Large \textbf{Universidade do Minho}\par}
+    {\Large \textbf{Licenciatura em Engenharia Biomédica}\par}
+
+    \vspace{2cm}
+    {\Huge \bfseries Aprendizagem Automática \par}
+    \rule{1.0\textwidth}{0.6pt}
+
+    {\large \textbf{Inteligência Artificial em Engenharia Biomédica}\par}
+    {\large \textbf{Ano Letivo 2025/2026}\par}
+    \vspace{5cm}
+    \begin{flushleft}
+        Ana Filipa Figueiredo -- a107239\\[0.4cm]
+        Dinis Rosa -- a107159\\[0.4cm]
+        Duarte Franco -- a107233
+    \end{flushleft}
+
+    \vfill
+    {\large Braga, \today\par}
+\end{titlepage}
+%===========================================================================================================================================================================================================
+\newpage
+\thispagestyle{empty}
+\section{Resumo}
+\begin{sloppypar}
+\par Este projeto teve como objetivo implementar um sistema de aprendizagem automática (\textit{ML - Machine Learning}) para prever o tipo de diabetes em indivíduos, com base em parâmetros clínicos como glicose, colesterol, pressão arterial e características antropométricas. Recorrendo à plataforma \textit{KNIME} para criar modelos de classificação e prever a condição diabética, desenvolvemos um \textit{pipeline} de ML.
+\par Após uma análise estatística inicial do conjunto de dados e a aplicação de pré-processamento e tratamento dos dados, foram criados diversos modelos de classificação. Com base nos resultados obtidos do desempenho dos modelos, selecionamos o com melhor desempenho.
+\par Como resultado deste trabalho, destacam-se não apenas as aprendizagens relacionadas ao processo de análise de dados e criação de modelos de classificação, mas também a experiência na utilização de plataformas de ML e a compreensão dos fatores de risco associados à diabetes.
+\end{sloppypar}
+%===========================================================================================================================================================================================================
+\newpage
+\tableofcontents
+%===========================================================================================================================================================================================================
+\newpage
+\section{Introdução}
+\par A diabetes é uma doença endócrina crónica caracterizada pelo aumento dos níveis de glicose no sangue, afetando milhões de pessoas a nível mundial. A prevalência crescente das diabetes, especialmente da diabetes tipo 2, representa um desafio significativo para os sistemas de saúde, sendo associada a complicações graves como doenças cardiovasculares, nefropatia e retinopatia. A deteção precoce e a classificação precisa do estado diabético são fundamentais para implementar intervenções terapêuticas de modo a prevenir complicações.
+\par Tradicionalmente, o diagnóstico da diabetes baseia-se em testes laboratoriais específicos como a medição de hemoglobina glicada (HbA1c) e glicose em jejum. No entanto, a integração de múltiplos parâmetros clínicos, antropométricos e metabólicos pode potencializar a capacidade de prever e permitir uma melhor estratificação de risco populacional.
+\par As técnicas de \textit{machine learning} emergiram como ferramentas poderosas na análise de dados clínicos complexos, permitindo identificar padrões e relações não-lineares entre variáveis que podem não ser evidentes através de métodos estatísticos tradicionais. A utilização de plataformas como o \textit{KNIME Analytics Platform} oferece uma abordagem visual e intuitiva para construção de \textit{workflows} de \textit{machine learning}, tornando estas técnicas acessíveis na investigação biomédica.
+\par O objetivo deste projeto consiste em desenvolver e validar modelos de classificação para previsão de diabetes utilizando \textit{machine learning}, avaliando qual o algoritmo com melhor desempenho na distinção entre indivíduos \textit{standard}, sem diabetes, e indivíduos em condição diabética (pré-diabetes e diabetes). Este relatório apresenta a metodologia empregada, os resultados obtidos e as principais conclusões deste estudo.
+%===========================================================================================================================================================================================================
+\newpage
+\section{Preliminares}
+\subsection{Inteligência Artificial e \textit{Machine Learning}}
+\par A Inteligência Artificial (IA) é uma área da ciência da computação dedicada ao desenvolvimento de sistemas computacionais capazes de simular comportamentos inteligentes observados em seres racionais, humanos ou animais. Estes sistemas têm como objetivo apoiar ou automatizar processos de decisão, executando tarefas como classificação, previsão, segmentação de dados (\textit{clustering}), associação, otimização, raciocínio baseado em casos e descoberta de padrões em grandes volumes de dados.
+\par Os algoritmos de IA podem ser organizados segundo diferentes paradigmas, nomeadamente o paradigma estatístico, o simbólico (como Árvores de Decisão e métodos de representação do conhecimento e raciocínio), o conexionista (Redes Neuronais Artificiais), o evolutivo (Algoritmos Genéticos) e o paradigma baseado em casos. A aplicação destes paradigmas permite desenvolver modelos capazes de aprender a partir de dados históricos e generalizar esse conhecimento a novas situações.
+\par A Aprendizagem Automática, ou \textit{Machine Learning}, é um subcampo da IA que se foca na criação de algoritmos capazes de aprender automaticamente a partir de dados, sem necessidade de programação explícita. Estes algoritmos são tipicamente \textit{data-driven}, ou seja, constroem modelos com base em exemplos, permitindo identificar padrões, efetuar previsões e apoiar a tomada de decisão. O ML tem demonstrado grande eficácia em áreas como a Engenharia Biomédica, particularmente na análise de dados clínicos e na previsão de doenças.
+
+\subsubsection{Aprendizagem Supervisionada}
+\par A aprendizagem supervisionada baseia-se na utilização de conjuntos de dados rotulados, nos quais existe informação conhecida sobre o resultado pretendido, também designado por atributo classe ou \textit{target}. O processo de aprendizagem envolve a divisão do \textit{dataset} em subconjuntos de treino e teste, sendo o primeiro utilizado para ensinar o modelo e o segundo para avaliar o seu desempenho.
+\par Este tipo de aprendizagem subdivide-se em dois grandes grupos: classificação e regressão. Os problemas de classificação estão associados a respostas qualitativas e têm como objetivo identificar a classe a que pertence uma determinada instância. Por sua vez, os problemas de regressão lidam com respostas quantitativas, tendo como principal finalidade a previsão de valores numéricos contínuos.
+\par Neste trabalho, serão utilizados algoritmos de aprendizagem supervisionada amplamente reconhecidos, nomeadamente Árvores de Decisão, \textit{Random Forest}, Redes Neuronais Artificiais e Regressão Logística, aplicados a problemas de classificação no contexto biomédico. \vspace{0.5cm}
+
+\par \noindent \textbf{Árvores de Decisão}
+\par As Árvores de Decisão são algoritmos de aprendizagem supervisionada utilizados tanto em classificação como em regressão. Estes modelos assumem uma estrutura hierárquica em forma de grafo, onde cada nodo interno representa um teste sobre um atributo, cada ramo corresponde a uma decisão possível e cada folha representa a classe ou valor final previsto.
+\par O processo de construção de uma árvore inicia-se com a seleção do atributo raiz, baseada no conceito de entropia, que mede o grau de impureza de um conjunto de dados. O atributo que apresenta maior ganho de informação, ou seja, maior redução da entropia, é escolhido como raiz da árvore. A partir deste nodo, o conjunto de dados é sucessivamente dividido até que se obtenha uma estrutura capaz de realizar previsões.
+\par As Árvores de Decisão destacam-se pela sua interpretabilidade e facilidade de utilização, sendo particularmente úteis em problemas de classificação discreta. No entanto, podem apresentar limitações em cenários com grande complexidade ou elevada interação entre atributos. \vspace{0.5cm}
+
+\par \noindent \textbf{\textit{Random Forest}}
+\par O algoritmo \textit{Random Forest} baseia-se na combinação de múltiplas Árvores de Decisão que operam de forma independente. Cada árvore realiza uma previsão individual, sendo o resultado final determinado pela votação maioritária entre todas as árvores do conjunto.
+\par Uma das principais vantagens deste método é a sua robustez face ao \textit{overfitting}, uma vez que os erros cometidos por árvores individuais tendem a ser compensados pelo conjunto. A \textit{Random Forest} apresenta bom desempenho mesmo em \textit{datasets} de grande dimensão ou com valores em falta, tornando-se uma técnica amplamente utilizada em problemas reais de classificação. \vspace{0.5cm}
+
+\par \noindent \textbf{Redes Neuronais Artificiais}
+\par As Redes Neuronais Artificiais (RNA) são modelos computacionais inspirados no funcionamento do sistema nervoso central. Estas redes são constituídas por neurónios artificiais interligados por sinapses, organizados em camadas, sendo capazes de aprender através do ajuste dos pesos das ligações.
+\par Cada neurónio processa as entradas recebidas, produzindo uma saída com base numa função de ativação. A aprendizagem ocorre através da adaptação dos pesos sinápticos ao longo do tempo, permitindo à rede generalizar o conhecimento adquirido e responder eficazmente a novos dados.
+As RNA são particularmente adequadas para problemas complexos e não lineares, sendo amplamente utilizadas em aplicações de \textit{Deep Learning}. \vspace{0.5cm}
+
+\par \noindent \textbf{Regressão Logística}
+\par A Regressão Logística é um algoritmo de aprendizagem supervisionada utilizado em problemas de classificação. Este modelo estima a probabilidade de uma instância pertencer a uma determinada classe através da função logística, garantindo que o valor previsto encontra-se no intervalo [0,1].
+\par Apesar do nome, a regressão logística é uma técnica de classificação e é frequentemente aplicada em contextos biomédicos, como a previsão da presença ou ausência de uma doença.
+
+
+\subsubsection{Aprendizagem Não Supervisionada}
+\par Na aprendizagem não supervisionada, os dados utilizados não se encontram identificados, não existindo informação prévia sobre os resultados pretendidos. O objetivo do algoritmo é identificar padrões, estruturas ou relações ocultas nos dados, modelando a sua distribuição.
+\par Este tipo de aprendizagem é particularmente útil em cenários onde o conhecimento prévio sobre os dados é reduzido. As principais categorias da aprendizagem não supervisionada são a segmentação (\textit{clustering}) e a aprendizagem por associação. \vspace{0.5cm}
+
+\par \noindent \textbf{Segmentação (\textit{Clustering})}
+\par A segmentação consiste na divisão de um conjunto de dados em grupos ou \textit{clusters}, de forma a maximizar a semelhança entre instâncias do mesmo grupo e minimizar a semelhança entre grupos diferentes. Esta técnica é amplamente utilizada na análise exploratória de dados.
+
+
+\subsubsection{Aprendizagem por Reforço}
+\par A aprendizagem por reforço é um paradigma no qual o sistema aprende através de um processo de tentativa e erro, recebendo recompensas ou penalizações em função das ações realizadas. O objetivo é maximizar a recompensa total ao longo do tempo.
+\par Embora não exista informação explícita sobre o resultado correto, este tipo de aprendizagem permite avaliar a qualidade das decisões tomadas, sendo utilizado sobretudo em problemas de otimização e controlo.
+
+
+\subsection{Plataforma \textit{KNIME}}
+\par O \textit{KNIME} é uma plataforma de análise de dados de código aberto que permite o desenvolvimento de modelos de ciência de dados através de uma interface gráfica intuitiva. A criação de soluções é realizada através de \textit{workflows}, compostos por \textit{pipelines} de dados constituídos por nodos interligados.
+\par Cada nodo executa uma tarefa específica, como leitura e escrita de dados, transformação, exploração, treino de modelos ou visualização de resultados. A abordagem visual do \textit{KNIME} facilita o desenvolvimento e a compreensão dos modelos, sendo particularmente adequada para aplicações em Inteligência Artificial e Engenharia Biomédica.
+
+
+\subsection{Métricas de Qualidade e Avaliação do Modelo}
+\par A avaliação do desempenho de um modelo de aprendizagem automática é uma etapa fundamental no desenvolvimento de sistemas de Inteligência Artificial, pois permite analisar a sua capacidade de generalização e a fiabilidade das previsões. As métricas de qualidade dependem do tipo de problema abordado, sendo diferentes para tarefas de classificação e regressão.
+\par No contexto do presente trabalho, serão desenvolvidos modelos de classificação, sendo necessário utilizar métricas específicas. Em aplicações biomédicas, a escolha adequada das métricas é crucial, uma vez que erros de previsão podem ter impacto significativo nos diagnósticos e decisões clínicas.
+
+
+\subsubsection{Métricas para Classificação}
+\par \noindent \textbf{Matriz de Confusão}
+\par A matriz de confusão é uma ferramenta essencial para avaliar modelos de classificação. Ela compara os valores previstos pelo modelo com os valores reais, permitindo identificar:
+\begin{itemize}
+    \item \textbf{Verdadeiros Positivos (TP)}: casos corretamente classificados como positivos.
+    \item \textbf{Verdadeiros Negativos (TN)}: casos corretamente classificados como negativos.
+    \item \textbf{Falsos Positivos (FP)}: casos classificados como positivos, quando na realidade são negativos.
+    \item \textbf{Falsos Negativos (FN)}: casos classificados como negativos, quando na realidade são positivos.
+\end{itemize}
+\par A partir destes valores, podem ser calculadas diversas métricas de desempenho. \vspace{0.5cm}
+
+\par \noindent \textbf{\textit{Accuracy}}
+\par A \textit{Accuracy} mede a proporção de previsões corretas em relação ao total de observações:
+\[ \mathrm{\textbf{Accuracy}} = \frac{\mathrm{TP} + \mathrm{TN}}{\mathrm{TP} + \mathrm{TN} + \mathrm{FP} + \mathrm{FN}} \]
+\par Embora seja intuitiva, a \textit{Accuracy} pode ser enganadora em conjuntos de dados não equilibrados, sendo recomendada a sua análise em conjunto com outras métricas. \vspace{0.5cm}
+
+\par \noindent \textbf{Precisão (\textit{Precision})}
+\par Indica a proporção de previsões positivas que são realmente corretas:
+\[ \mathrm{\textbf{Precision}} = \frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FP}} \] \vspace{0.5cm}
+
+\par \noindent \textbf{Sensibilidade (\textit{Recall})}
+\par Avalia a capacidade do modelo em identificar corretamente os casos positivos:
+\[ \mathrm{\textbf{Recall}} = \frac{\mathrm{TP}}{\mathrm{TP} + \mathrm{FN}} \] \vspace{0.5cm}
+
+\par \noindent \textbf{Especificidade}
+\par Mede a capacidade do modelo em identificar corretamente os casos negativos:
+\[ \mathrm{\textbf{Especificidade}} = \frac{\mathrm{TN}}{\mathrm{TN} + \mathrm{FP}} \] \vspace{0.5cm}
+
+\par \noindent \textbf{\textit{F-measure (F1-score)}}
+\par Combina precisão e sensibilidade através da média harmónica, sendo útil quando é necessário equilibrar falsos positivos e falsos negativos:
+\[ \mathrm{\textbf{F1-score}} = 2 \times \frac{\mathrm{Precision} \times \mathrm{Recall}}{\mathrm{Precision} + \mathrm{Recall}} \] \vspace{0.5cm}
+
+\par \noindent \textbf{Curva \textit{ROC} e \textit{AUC}}
+\par A curva ROC (\textit{Receiver Operating Characteristic}) relaciona a taxa de verdadeiros positivos com a taxa de falsos positivos para diferentes thresholds. A área sob a curva (AUC) fornece uma medida global da capacidade discriminativa do modelo,variando entre 0,5 (classificação aleatória) e 1 (classificador perfeito). \vspace{0.5cm}
+
+\par \noindent \textbf{Coeficiente de Cohen (\textit{Cohen’s Kappa})}
+\par Avalia a concordância entre as previsões do modelo e os valores reais, considerando a concordância que ocorreria por acaso. Valores próximos de 1 indicam elevada concordância, enquanto valores próximos de 0 indicam concordância fraca.
+
+
+\subsubsection{Métricas para Regressão}
+\par Para modelos de regressão, que prevêem valores contínuos, são utilizadas métricas diferentes:
+\begin{itemize}
+    \item \textbf{Erro Médio Absoluto (MAE):} média das diferenças absolutas entre os valores previstos e os reais.
+    \item \textbf{Erro Quadrático Médio (MSE):} média dos quadrados das diferenças entre valores previstos e reais, penalizando erros maiores.
+    \item \textbf{Raiz do Erro Quadrático Médio (RMSE):} raiz quadrada do MSE, mantendo a mesma unidade dos dados originais.
+    \item \textbf{$\mathbf{R^2}$ (Coeficiente de Determinação):} indica a proporção da variância dos dados explicada pelo modelo, variando entre 0 e 1, sendo valores próximos de 1 indicativos de bom ajuste.
+\end{itemize}
+%===========================================================================================================================================================================================================
+\newpage
+\section{Desenvolvimento do Sistema de Aprendizagem}
+\subsection{Base de conhecimento}
+\par O sistema foi implementado recorrendo à plataforma KNIME e baseia-se na construção, treino e validação de modelos de classificação supervisionada e não supervisionada. Os dados utilizados dizem respeito a um estudo sobre a diabetes e incluem diversas medições clínicas e demográficas dos indivíduos, sendo o atributo target utilizado para classificar os utentes quando estes tem valores equivalentes a standard, pré-diabetes e diabetes.
+\begin{itemize}
+    \item \textbf{Number}: Id do paciente;
+    \item \textbf{Cholesterol}: Colesterol;
+    \item \textbf{Stab}.glucose: Glicose Estabilizada;
+    \item \textbf{Hdl}: Colesterol de Lipoproteínas de Alta Densidade;
+    \item \textbf{Ratio\_target}: Estado de suade do utente (Standard, Prediabetes e Diabetes);
+    \item \textbf{Glyhb}: Hemoglobina Glicada -- HbA1c;
+    \item \textbf{Location}: Localização (Louisa, Buckingham);
+    \item \textbf{Age}: Idade em anos do paciente;
+    \item \textbf{Year}: Ano de nascimento;
+    \item \textbf{Month}: Mês de nascimento;
+    \item \textbf{Day}: Dia de nascimento;
+    \item \textbf{Gender}: Género (Male ou Female); 	
+    \item \textbf{Height}: Altura em centímetros;
+    \item \textbf{Weight}: Peso em quilogramas 
+    \item \textbf{Frame}: Tipo de estrutura corporal (Small, Medion e Large);
+    \item \textbf{Bp}.1s: 1ª medição da pressão arterial sistólica;
+    \item \textbf{Bp}.1d: 1ª medição da pressão arterial diastólica;
+    \item \textbf{Bp}.2s: 2ª medição da pressão arterial sistólica;
+    \item \textbf{Bp}.2d: 2ª medição da pressão arterial diastólica;
+    \item \textbf{Waist}: Perímetro da cintura em centímetros;
+    \item \textbf{Hip}: Peptídeos híbridos de insulina;
+    \item \textbf{Time}.ppn: Nutrição parenteral parcial;
+\end{itemize}
+\par Os conjuntos de dados iniciais incluem um atributo "\textit{target}", correspondente à variável dependente do estudo, que representa o estado metabólico dos pacientes. Este atributo permite classificar os indivíduos em três categorias distintas: \textit{standard}, pré-diabetes e diabetes, de acordo com critérios clínicos padronizados. Dado que a variável de saída é conhecida, o desenvolvimento do sistema enquadra-se na abordagem de aprendizagem supervisionada.
+\par Para este estudo, foram utilizados diversos algoritmos de Inteligência Artificial aplicados à classificação, nomeadamente Árvores de Decisão e Redes Neuronais Artificiais, Regressão Logística, Random Forest e Segmentação.
+\par O \textit{software KNIME Analytics Platform} foi utilizado para a implementação destes algoritmos, uma vez que disponibiliza ferramentas robustas e amplamente utilizadas para a construção, treino e validação de modelos de aprendizagem automática. No total, foram desenvolvidos cinco modelos de classificação, correspondentes às técnicas anteriormente mencionadas, com o objetivo de prever o estado glicémico dos pacientes.
+
+
+\subsection{Carregamento dos dados}
+\par Com o intuito de carregar os conjuntos de dados na plataforma \textit{KNIME} para posterior tratamento e utilização nos modelos de aprendizagem automática, recorreu-se à utilização de um nó de leitura de dados. Embora os \textit{datasets} tenham sido disponibilizados tanto em formato Excel como em formato CSV, optou-se pela utilização do ficheiro CSV, atendendo às suas vantagens em termos de simplicidade, compatibilidade e eficiência no processamento de dados.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.2\textwidth]{imagem1}
+    \caption{Nodo \textit{CSV Reader}}
+    \label{imagem_1}
+\end{figure}
+\FloatBarrier
+\par Desta forma, foi selecionado o nodo \textbf{\textit{CSV Reader}} que permite a importação direta de dados estruturados, garantindo uma leitura consistente das variáveis, bem como um melhor desempenho na manipulação de grandes volumes de dados. Esta escolha contribui para uma maior reprodutibilidade do processo, uma vez que o formato CSV é amplamente suportado por diferentes plataformas e ferramentas de análise de dados.
+\par Através da \textit{figura \ref{imagem_2}}, é possível visualizar uma pequena amostra de um \textit{sub-dataset} que irá ser analisado.
+\par Verifica-se que o \textit{sub-dataset} considerado é constituído por 22 atributos, os quais serão utilizados para efeitos de análise e desenvolvimento dos modelos de classificação, uma vez que cada um fornece informação relevante para a caracterização clínica dos indivíduos.
+\par O atributo alvo ou \textit{target}, identificado pela designação "\textit{ratio\_target}", corresponde à variável dependente do estudo e representa o estado metabólico dos pacientes. Esta variável é utilizada como referência para o treino e validação dos modelos de aprendizagem supervisionada.
+\par Os restantes atributos constituem as variáveis independentes, englobando parâmetros clínicos, antropométricos e laboratoriais, os quais podem influenciar ou não, ou estar associados à progressão do estado glicémico e ao desenvolvimento de diabetes.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{imagem2}
+    \caption{\textit{Sub-dataset}}
+    \label{imagem_2}
+\end{figure}
+\FloatBarrier
+
+\subsection{Exploração e análise de dados}
+\par \noindent \textbf{\textit{Nodo Data Explorer}}
+\par O nodo \textbf{\textit{Data Explorer}} é uma ferramenta destinada à exploração inicial dos dados, permitindo uma análise detalhada da estrutura, distribuição e qualidade do conjunto de dados. Este nodo fornece estatísticas descritivas para cada atributo, como valores mínimos e máximos, média, mediana, desvio padrão e frequência de valores categóricos.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{imagem3}
+    \caption{Tabela resultado do Nodo \textit{Data Explorer}}
+    \label{imagem_3}
+\end{figure}
+\FloatBarrier
+\par Adicionalmente, o \textbf{\textit{Data Explorer}} apresenta visualizações automáticas, incluindo histogramas, gráficos de barras e tabelas de frequência, facilitando a identificação de padrões, assimetrias, valores extremos e possíveis inconsistências nos dados. O nodo também permite detetar valores em falta e avaliar a distribuição das classes do atributo \textit{target}, constituindo uma etapa fundamental para a compreensão global do \textit{dataset} antes da aplicação de técnicas de pré-processamento e modelação.
+
+\par \noindent \textbf{\textit{Nodo Box Plot}}
+\par O nodo \textbf{\textit{Box Plot}} é utilizado para a análise visual da distribuição das variáveis numéricas, através da representação gráfica baseada em quartis. Este tipo de gráfico permite identificar de forma clara a mediana, os quartis, a amplitude interquartil e os valores extremos (\textit{outliers}) presentes nos dados.
+\par A utilização do \textbf{\textit{Box Plot}} é particularmente relevante na deteção de assimetria na distribuição, comparação entre diferentes grupos ou classes e avaliação da dispersão dos dados. No contexto da análise exploratória, este nodo auxilia na identificação de variáveis que possam necessitar de tratamento adicional, como normalização ou remoção de \textit{outliers}, contribuindo para a melhoria da qualidade dos dados e do desempenho dos modelos de aprendizagem automática.
+
+
+\subsection{Pré-processamento dos dados}
+\par O pré-processamento dos dados representa uma etapa crítica no desenvolvimento de sistemas de aprendizagem automática, uma vez que a qualidade, consistência e adequação dos dados têm impacto direto no desempenho, estabilidade e capacidade de generalização dos modelos. Assim, antes da fase de treino e validação, foi realizado um conjunto sistemático de procedimentos de análise, limpeza, transformação e normalização dos dados, recorrendo aos nodos disponibilizados pela plataforma \textit{KNIME Analytics Platform}.
+
+\vspace{0.5cm}
+\par \noindent \textbf{\textit{Análise exploratória inicial dos dados}}
+\par O processo teve início com a análise exploratória do ficheiro CSV através do nodo \textbf{\textit{Data Explorer}}, o qual permite uma avaliação abrangente da estrutura do conjunto de dados.
+\par Através desta análise, foi possível identificar:
+\begin{itemize}
+    \item Valores extremos fora do intervalo clinicamente expectável;
+    \item Atributos com desvios padrões elevados, indicando elevada dispersão;
+    \item Inconsistências nos tipos de dados, nomeadamente variáveis numéricas armazenadas como texto (\textit{strings});
+    \item Erros ortográficos e redundâncias em atributos nominais.
+\end{itemize}
+\par Esta etapa foi essencial para orientar as decisões subsequentes de limpeza e transformação dos dados.
+
+\vspace{0.5cm}
+\par \noindent \textbf{\textit{Conversão de tipos de dados}}
+\par Durante a análise exploratória, verificou-se que o atributo "\textit{GlyHb}", Hemoglobina Glicada, se encontrava incorretamente representado como variável do tipo \textit{string}. Uma vez que este atributo constitui um parâmetro clínico quantitativo relevante para a classificação do estado glicémico, procedeu-se à sua conversão para formato numérico utilizando o nodo \textbf{\textit{String to Number}}.
+\begin{figure}[h]
+    \centering
+    \raisebox{1.0\height}{\includegraphics[width=0.2\textwidth]{imagem4_1}}
+    \hspace{0.1\textwidth}
+    \includegraphics[width=0.45\textwidth]{imagem4_2}
+    \caption{Nodo \textit{String to Number} e sua configuração}
+    \label{imagem_4}
+\end{figure}
+\FloatBarrier
+\par Este nodo permite a transformação segura de valores textuais em valores numéricos, assegurando a compatibilidade do atributo com algoritmos de aprendizagem automática que requerem entradas quantitativas.
+
+\vspace{0.5cm}
+\par \noindent \textbf{\textit{Normalização de valores nominais inconsistentes}}
+\par A análise da aba "\textit{Nominal}" do \textbf{\textit{Data Explorer}} revelou a existência de categorias semanticamente equivalentes, mas com grafias distintas, como por exemplo “diabetes” e “diabets”, “female” e “woman”, ou “small” e “smaal”. Estas inconsistências introduzem ruído nos dados e podem levar a interpretações erradas por parte dos modelos.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{imagem5_1}
+    \\
+    \includegraphics[width=0.8\textwidth]{imagem5_2}
+    \caption{Resultados nominais do nodo \textit{Data Explorer}}
+    \label{imagem_5}
+\end{figure}
+\FloatBarrier
+\par Para resolver este problema, foi utilizado o nodo \textbf{\textit{Rule Engine}}, que permite definir regras condicionais para mapear diferentes representações textuais para uma única categoria normalizada. Este processo assegura a coerência semântica dos atributos categóricos e reduz a dimensionalidade implícita do \textit{dataset}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\textwidth]{imagem6}
+    \caption{Nodo \textit{Rule Engine} para a coluna "\textit{frame}"}
+    \label{imagem_6}
+\end{figure}
+\FloatBarrier
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\textwidth]{imagem7}
+    \caption{Nodo \textit{Rule Engine} para a coluna "\textit{ratio\_target}"}
+    \label{imagem_7}
+\end{figure}
+\FloatBarrier
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\textwidth]{imagem8}
+    \caption{Nodo \textit{Rule Engine} para a coluna \textit{gender}}
+    \label{imagem_8}
+\end{figure}
+\FloatBarrier
+
+
+\vspace{0.5cm}
+\par \noindent \textbf{\textit{Deteção e remoção de valores atípicos (\textit{outliers})}}
+\par Posteriormente, recorreu-se ao nodo \textbf{\textit{Numeric Outliers}}, cuja função é identificar e remover observações que se encontrem fora do intervalo estatisticamente esperado. A presença de \textit{outliers} pode distorcer métricas estatísticas, influenciar negativamente a aprendizagem dos modelos e aumentar o erro de previsão.
+\par Neste estudo, o nodo foi aplicado a todas as variáveis numéricas, com exceção do atributo "\textit{time.ppn}", uma vez que este apresenta uma natureza específica e foi tratado separadamente numa fase posterior.
+\begin{figure}[h]
+    \centering
+    \raisebox{1.0\height}{\includegraphics[width=0.2\textwidth]{imagem9_1}}
+    \hspace{0.1\textwidth}
+    \includegraphics[width=0.45\textwidth]{imagem9_2}
+    \caption{Nodo \textit{Numeric Outliers} e sua configuração}
+    \label{imagem_9}
+\end{figure}
+\FloatBarrier
+
+
+\vspace{0.5cm}
+\par \noindent \textbf{\textit{Seleção de medições clínicas mais fiáveis}}
+\par Durante a análise dos dados, verificou-se que nem todos os pacientes apresentavam o mesmo número de medições da pressão arterial sistólica e diastólica. Em alguns casos, encontrava-se disponível apenas uma medição, enquanto noutros estavam registadas duas medições distintas.
+\par Para os pacientes com uma única medição, essa medição foi integralmente mantida no conjunto de dados. Nos casos em que existiam duas medições, optou-se por considerar exclusivamente a segunda medição ("\textit{bp.2s}" e "\textit{bp.2d}"). Esta decisão fundamenta-se no pressuposto clínico de que a repetição da medição ocorre quando os profissionais de saúde identificam a necessidade de uma avaliação adicional, seja para confirmar valores iniciais, reduzir a variabilidade ou corrigir possíveis erros associados à primeira medição. Assim, a segunda medição foi considerada mais representativa e fiável do estado clínico do paciente.
+\par Como resultado deste processo, foram criados dois novos atributos finais, "\textit{bp.1sfinal}" e "\textit{bp.1dfinal}" que agregam, para cada paciente, a medição mais fiável da pressão arterial sistólica e diastólica, respetivamente. As colunas originais de medições foram posteriormente removidas, assegurando um conjunto de dados mais consistente e adequado à fase de modelação.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.6\textwidth]{imagem10}
+    \caption{Nodo \textit{Rule Engine} para a coluna \textit{bp.1sfinal}}
+    \label{imagem_10}
+\end{figure}
+\FloatBarrier
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.6\textwidth]{imagem11}
+    \caption{Nodo \textit{Rule Engine} para a coluna \textit{bp.1dfinal}}
+    \label{imagem_11}
+\end{figure}
+\FloatBarrier
+
+
+\vspace{0.5cm}
+\par \noindent \textbf{\textit{Discretização do atributo \textit{time.ppn}}}
+\par O atributo \textit{time.ppn} corresponde a uma variável numérica contínua que representa o intervalo temporal associado à medição, apresentando uma elevada variabilidade e um amplo intervalo de valores. Esta heterogeneidade pode dificultar o processo de aprendizagem dos modelos de classificação, uma vez que valores muito dispersos tendem a introduzir ruído, aumentar a complexidade do espaço de decisão e reduzir a capacidade de generalização dos algoritmos.
+\par Com o objetivo de mitigar estes efeitos e tornar a variável mais clinicamente significativa e computacionalmente eficiente, procedeu-se à discretização do atributo \textit{time.ppn}, agrupando os valores contínuos em três categorias bem definidas, de acordo com intervalos temporalmente interpretáveis:
+\begin{itemize}
+    \item \textbf{Pós-prandial ($\mathbf{\leq 120}$):} corresponde a medições realizadas num período próximo após a ingestão alimentar, no qual os níveis de glicose tendem a sofrer variações fisiológicas significativas;
+    \item \textbf{Intermédio ($\mathbf{> 120}$ textbf{e} $\mathbf{\leq 480}$):} representa um intervalo de transição entre o estado pós-prandial e o jejum, no qual os valores metabólicos tendem a estabilizar progressivamente;
+    \item \textbf{Jejum ($\mathbf{> 480}$):} corresponde a medições realizadas após um período prolongado sem ingestão alimentar, refletindo o estado basal do metabolismo glicémico.
+\end{itemize}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\textwidth]{imagem12}
+    \caption{Nodo \textit{Rule Engine} para a coluna \textit{time.ppntratado}}
+    \label{imagem_12}
+\end{figure}
+\FloatBarrier
+\par Este processo originou um novo atributo categórico denominado "\textit{time.ppntratado}", que substitui a variável contínua original. A discretização permite reduzir a complexidade do espaço de entrada, facilitar a interpretação clínica dos dados e melhorar o desempenho dos modelos de aprendizagem automática, contribuindo para um aumento da precisão e para a redução do erro de classificação.
+
+
+\vspace{0.5cm}
+\par \noindent \textbf{\textit{Codificação de variáveis categóricas}}
+\par As variáveis categóricas "\textit{gender}" e "\textit{time.ppntratado}" foram transformadas utilizando o nodo \textbf{\textit{One to Many}}, o qual implementa a técnica de \textit{one-hot encoding}. Este método consiste na conversão de uma variável categórica numa representação binária, criando uma coluna binária distinta para cada classe existente dentro do atributo original.
+\par Por exemplo, no caso da variável "\textit{gender}", as categorias "\textit{male}" e "\textit{female}" são transformadas em colunas independentes, nas quais o valor 1 indica a presença da respetiva categoria e o valor 0 indica a sua ausência. De forma análoga, a variável "\textit{time.ppntratado}" é desdobrada em múltiplas colunas binárias correspondentes às categorias pós-prandial, intermédio, jejum e desconhecido, permitindo representar explicitamente situações em que a informação não se encontra disponível ou não é passível de classificação.
+\par A inclusão da categoria desconhecido assegura que os valores em falta ou ambíguos não são descartados nem introduzem enviesamentos artificiais no processo de aprendizagem, preservando a integridade dos dados e permitindo que os modelos aprendam a lidar com incerteza de forma adequada.
+\begin{figure}[h]
+    \centering
+    \raisebox{1.0\height}{\includegraphics[width=0.2\textwidth]{imagem13_1}}
+    \hspace{0.1\textwidth}
+    \includegraphics[width=0.45\textwidth]{imagem13_2}
+    \caption{Nodo \textit{One to Many} e sua configuração}
+    \label{imagem_13}
+\end{figure}
+\FloatBarrier
+\par A utilização do \textit{one-hot encoding} é fundamental para evitar a introdução de relações ordinais artificiais entre categorias que não possuem uma ordem natural. Caso estas categorias fossem codificadas diretamente como valores inteiros (por exemplo, 0, 1, 2), os modelos poderiam interpretar incorretamente uma hierarquia inexistente entre as classes.
+\par Além disso, esta técnica garante a compatibilidade com algoritmos de aprendizagem automática que requerem exclusivamente dados numéricos, permitindo que cada categoria contribua de forma independente para o processo de aprendizagem. Desta forma, o nodo \textbf{\textit{One to Many}} facilita a correta interpretação das variáveis categóricas pelos modelos, contribuindo para uma aprendizagem mais robusta, interpretável e precisa.
+
+
+\vspace{0.5cm}
+\par \noindent \textbf{\textit{Seleção e eliminação de atributos redundantes}}
+\par Com o objetivo de reduzir a complexidade do modelo, minimizar a dimensionalidade do conjunto de dados e evitar redundâncias que possam afetar negativamente o desempenho dos algoritmos de aprendizagem automática, foi utilizado o nodo \textbf{\textit{Column Filter}} para remover atributos considerados irrelevantes ou redundantes.
+\par No caso particular da variável "\textit{gender}", após a aplicação da técnica de \textit{one-hot encoding} através do nodo \textbf{\textit{One to Many}}, foram geradas colunas binárias correspondentes às categorias "\textit{male}" e "\textit{female}". No entanto, estas colunas não são independentes entre si, uma vez que a presença de uma categoria implica necessariamente a ausência das restantes. Assim, a manutenção de todas as colunas introduziria redundância linear no conjunto de dados.
+\begin{figure}[h]
+    \centering
+    \raisebox{1.0\height}{\includegraphics[width=0.2\textwidth]{imagem14_1}}
+    \hspace{0.1\textwidth}
+    \includegraphics[width=0.45\textwidth]{imagem14_2}
+    \caption{Nodo \textit{Column Filter} e sua configuração}
+    \label{imagem_14}
+\end{figure}
+\FloatBarrier
+\par Por este motivo, optou-se por remover a coluna "\textit{female}", mantendo apenas a coluna "\textit{male}" (e, quando aplicável, a coluna "\textit{desconhecido}"). Nesta configuração, um valor 1 na coluna "\textit{male}" indica indivíduos do sexo masculino, enquanto um valor 0 indica automaticamente indivíduos do sexo feminino.
+
+
+\vspace{0.5cm}
+\par \noindent \textbf{\textit{Tratamento de valores em falta}}
+\par Para o tratamento de valores ausentes, foi utilizado o nodo \textbf{\textit{Missing Value}} (\textit{figura \ref{imagem_15}}). A substituição de valores numéricos pela média foi escolhida por preservar a tendência central da distribuição. Para variáveis categóricas, foi aplicada a substituição pelo valor mais frequente, assegurando coerência sem introduzir categorias artificiais.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.6\textwidth]{imagem15}
+    \caption{Configuração do nodo \textit{Missing Value}}
+    \label{imagem_15}
+\end{figure}
+\FloatBarrier
+
+
+\vspace{0.5cm}
+\par \noindent \textbf{\textit{Normalização dos dados}}
+Por fim, foi aplicado o nodo \textbf{\textit{Normalizer}}, escalando todas as variáveis numéricas para o intervalo [0,1]. A normalização garante que todas as variáveis contribuem de forma equilibrada para o treino dos modelos, sendo particularmente relevante para algoritmos sensíveis à escala dos dados, como as redes neuronais artificiais.
+\begin{figure}[h]
+    \centering
+    \raisebox{1.0\height}{\includegraphics[width=0.2\textwidth]{imagem16_1}}
+    \hspace{0.1\textwidth}
+    \includegraphics[width=0.45\textwidth]{imagem16_2}
+    \caption{Nodo \textit{Normalizer} e sua configuração}
+    \label{imagem_16}
+\end{figure}
+\FloatBarrier
+
+\subsection{Processamento de Dados}
+\par Com vista à modelação dos dados previamente preparados na plataforma \textit{KNIME}, foram aplicados vários nodos de aprendizagem automática, integrando métodos de aprendizagem supervisionada e não supervisionada. Entre os nodos utilizados destacam-se o \textbf{\textit{K-Means}}, em articulação com o \textbf{\textit{Cluster Assigner}}, bem como os pares \textbf{\textit{Decision Tree Learner / Decision Tree Predictor}}, \textbf{\textit{Logistic Regression Learner / Logistic Regression Predictor}}, \textbf{\textit{RProp MLP Learner / MultiLayerPerceptron Predictor}} e, adicionalmente, o \textbf{\textit{Random Forest Learner}} juntamente com o \textbf{\textit{Random Forest Predictor}}.
+\par No que diz respeito às Redes Neuronais Artificiais, o treino do modelo é realizado através do \textbf{\textit{RProp MLP Learner}}, que implementa uma arquitetura de \textit{perceptron} multicamada, enquanto o \textbf{\textit{MultiLayerPerceptron Predictor}} é utilizado na fase de inferência (figura \ref{imagem_17}).
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.2\textwidth]{imagem17}
+    \caption{\textit{RProp MLP Learner} com o \textit{MultiLayerPerceptron Predictor}}
+    \label{imagem_17}
+\end{figure}
+\FloatBarrier
+\par O \textbf{\textit{Decision Tree Learner}} permite a construção de um modelo baseado em árvores de decisão, o qual é posteriormente explorado pelo \textbf{\textit{Decision Tree Predictor}} para efetuar a classificação do atributo \textit{target} (figura \ref{imagem_18}).
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.2\textwidth]{imagem18}
+    \caption{\textit{Decision Tree Learner} com o \textit{Decision Tree Predictor}}
+    \label{imagem_18}
+\end{figure}
+\FloatBarrier
+\par De forma análoga, o \textbf{\textit{Logistic Regression Learner}} é responsável pelo treino do modelo de regressão logística, sendo o respetivo \textbf{\textit{Predictor}} utilizado para gerar as previsões de classe (figura \ref{imagem_19}).
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.2\textwidth]{imagem19}
+    \caption{\textit{Logistic Regression Learner} com o \textit{Logistic Regression Predictor}}
+    \label{imagem_19}
+\end{figure}
+\FloatBarrier
+\par Por sua vez, o modelo \textbf{\textit{Random Forest}} é obtido através do \textbf{\textit{Random Forest Learner}}, que combina múltiplas árvores de decisão, sendo o processo de previsão assegurado pelo \textbf{\textit{Random Forest Predictor}} (figura \ref{imagem_20}).
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.2\textwidth]{imagem20}
+    \caption{\textit{Random Forest Learner} com o \textit{Random Forest Predictor}}
+    \label{imagem_20}
+\end{figure}
+\FloatBarrier
+\par Relativamente à aprendizagem não supervisionada, o nodo \textbf{\textit{K-Means}} é aplicado para agrupar os dados em clusters com base na sua similaridade. O \textbf{\textit{Cluster Assigner}} é então utilizado para associar cada observação ao respetivo \textit{cluster}. De modo a facilitar a interpretação e comparação dos resultados obtidos, recorreu-se ao \textbf{\textit{Rule Engine}} para atribuir rótulos interpretáveis aos diferentes segmentos identificados (figura \ref{imagem_21}).
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.2\textwidth]{imagem21}
+    \caption{\textit{K-Means} com o \textit{Cluster Assigner}}
+    \label{imagem_21}
+\end{figure}
+\FloatBarrier
+
+\subsection{Visualização dos Resultados}
+\par Com o objetivo de analisar e interpretar os resultados obtidos, bem como avaliar o desempenho dos modelos de aprendizagem automática desenvolvidos, foram utilizados diversos nodos de visualização. Entre os nodos selecionados encontram-se o \textbf{\textit{Scorer}}, o \textbf{\textit{Color Manager}} em conjunto com o \textbf{\textit{Scatter Plot}}, o \textbf{\textit{Box Plot}} e a \textbf{\textit{ROC Curve}}.
+\par O nodo \textbf{\textit{Scorer}} é utilizado para comparar os valores reais do atributo \textit{target} com os valores previstos pelos modelos de classificação. Este nodo gera uma matriz de confusão, na qual é possível observar o número de instâncias corretamente e incorretamente classificadas para cada classe. Adicionalmente, o \textbf{\textit{Scorer}} disponibiliza métricas de avaliação relevantes, tais como a \textit{accuracy}, o erro de classificação, entre outros indicadores de desempenho, permitindo uma avaliação quantitativa da qualidade das previsões.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.15\textwidth]{imagem22}
+    \caption{\textit{Scorer}}
+    \label{imagem_22}
+\end{figure}
+\FloatBarrier
+\par O nodo \textbf{\textit{Scatter Plot}}, em articulação com o \textbf{\textit{Color Manager}}, permite a representação gráfica dos dados sob a forma de um gráfico de dispersão. O \textbf{\textit{Color Manager}} é responsável pela atribuição de cores distintas às observações, de acordo com a classe ou categoria definida, facilitando a identificação visual de padrões, separações entre classes e possíveis sobreposições nos resultados obtidos.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.2\textwidth]{imagem23}
+    \caption{\textit{Scatter Plot} com o \textit{Color Manager}}
+    \label{imagem_23}
+\end{figure}
+\FloatBarrier
+\par O \textbf{\textit{Box Plot}} é utilizado para a análise da distribuição dos dados e dos resultados das previsões, permitindo visualizar medidas estatísticas como a mediana, os quartis e a presença de valores extremos (\textit{outliers}). Esta visualização é particularmente útil para avaliar a dispersão dos dados e verificar a consistência das variáveis após o pré-processamento.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.15\textwidth]{imagem24}
+    \caption{\textit{Box Plot}}
+    \label{imagem_24}
+\end{figure}
+\FloatBarrier
+\par Por fim, a \textbf{\textit{ROC Curve}} é utilizada para avaliar o desempenho dos modelos de classificação em termos da sua capacidade discriminativa. Esta curva representa a relação entre a taxa de verdadeiros positivos e a taxa de falsos positivos para diferentes limiares de decisão. A análise da área sob a curva (AUC) permite comparar o desempenho dos diferentes modelos, sendo que valores mais elevados indicam uma melhor capacidade de distinção entre as classes.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.2\textwidth]{imagem25}
+    \caption{\textit{ROC Curve}}
+    \label{imagem_25}
+\end{figure}
+\FloatBarrier
+%===========================================================================================================================================================================================================
+\newpage
+\section{Modelos de Aprendizagem}
+\par Para a previsão do tipo de diabetes neste projeto, foram selecionados e implementados cinco algoritmos distintos de ML, cada um com características e aplicações específicas. A utilização de múltiplos algoritmos permite não apenas comparar o seu desempenho relativo, mas também compreender as vantagens e limitações de diferentes abordagens na classificação de dados biomédicos.
+\par A seleção destes algoritmos fundamenta-se na sua aplicabilidade comprovada em contextos de classificação médica, na diversidade de abordagens (supervisionadas e não-supervisionadas), e na facilidade de implementação em plataformas como o \textit{KNIME}. Nas secções seguintes, será apresentada a fundamentação teórica de cada algoritmo, a sua implementação no \textit{workflow KNIME}, e a análise comparativa do seu desempenho na previsão de diabetes.
+
+
+\subsection{Redes Neuronais (RProp)}
+\par O workflow inicia-se com o nodo \textbf{\textit{CSV Reader}}, seguido de um \textbf{\textit{Table Partitioner}}, configurado para dividir aleatoriamente a base de dados em 80\% para treino e 20\% para teste. 
+\par O treino do modelo é realizado através do nodo \textbf{\textit{RProp MLP Learner}}, configurado para classificação multiclasse. Após o treino, o modelo é aplicado ao conjunto de teste utilizando o nodo \textbf{\textit{MultiLayerPerceptron Predictor}}, que gera as probabilidades associadas a cada uma das classes. De forma a permitir a aplicação de \textit{thresholds} específicos por classe, o \textbf{\textit{MultiLayerPerceptron Predictor}} foi configurado para disponibilizar separadamente as probabilidades previstas para cada categoria.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.6\textwidth]{imagem26}
+    \caption{Nodo \textit{RProp MLP Learner}, utilizado para o treino de um modelo de redes neuronais do tipo \textit{Multilayer Perceptron}}
+    \label{imagem_26}
+\end{figure}
+\FloatBarrier
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.6\textwidth]{imagem27}
+    \caption{Nodo \textit{Multilayer Perceptron Predictor}, utilizado para aplicar o modelo de redes neuronais treinado aos dados de teste}
+    \label{imagem_27}
+\end{figure}
+\FloatBarrier
+\par Seguidamente, é aplicado um \textbf{\textit{Rule Engine}}, onde foram definidos \textit{thresholds} distintos para cada uma das classes (diabetes, pré-diabetes e standard). Sempre que um indivíduo não satisfaz nenhum dos \textit{thresholds} definidos, é atribuída uma classe adicional designada por “incerto”, permitindo identificar explicitamente situações de maior ambiguidade na decisão do modelo.
+\par A avaliação do desempenho é realizada através de nodos \textbf{\textit{Scorer}}, antes e depois da aplicação dos \textit{thresholds}, permitindo analisar o impacto direto das regras no erro total e na distribuição dos tipos de erro. Para complementar esta análise, foram utilizadas representações gráficas, nomeadamente o \textbf{\textit{ROC Curve}}, \textbf{\textit{Scatter Plot (JavaScript – Legacy)}} e \textbf{\textit{Box Plots}}, que permitem uma análise mais detalhada do comportamento do modelo.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.4\textwidth]{imagem28}
+    \caption{Redes Neuronais (RProp)}
+    \label{imagem_28}
+\end{figure}
+\FloatBarrier
+
+\subsection{Árvore de Decisão}
+\par O \textit{workflow} inicia-se com o nodo \textbf{\textit{CSV Reader}}, seguido de um \textbf{\textit{Table Partitioner}}, configurado para dividir aleatoriamente a base de dados em 80\% para treino e 20\% para teste. 
+\par O treino do modelo é realizado através do nodo \textbf{\textit{Decision Tree Learner}}, configurado para classificação. A estrutura da árvore aprendida foi analisada através da \textbf{\textit{Decision Tree View (JavaScript – Legacy)}}, permitindo compreender as regras de decisão criadas pelo modelo e a forma como as variáveis contribuem para a classificação das diferentes classes.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.4\textwidth]{imagem29}
+    \caption{Nodo \textit{Decision Tree Learner}, que permite a seleção, divisão e classificação de atributos através de árvores de decisão}
+    \label{imagem_29}
+\end{figure}
+\FloatBarrier
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.6\textwidth]{imagem30}
+    \caption{Nodo \textit{Decision Tree View (JavaScript – Legacy)}, utilizado para visualizar a estrutura e as regras da árvore de decisão}
+    \label{imagem_30}
+\end{figure}
+\FloatBarrier
+\par O modelo treinado é aplicado ao conjunto de teste utilizando o \textbf{\textit{Decision Tree Predictor}}, que gera as previsões para cada instância. Estas previsões são inicialmente avaliadas com um \textbf{\textit{Scorer}}, permitindo obter uma referência do desempenho do modelo sem qualquer ajuste adicional.
+\par Posteriormente, foi introduzido um \textbf{\textit{Rule Engine}}, onde se tentou aplicar \textit{thresholds} específicos para cada uma das classes, com o objetivo de reduzir erros clinicamente mais relevantes. Após a aplicação destas regras, os resultados foram novamente avaliados através de um segundo \textbf{\textit{Scorer}}. Para complementar a análise, foram utilizados nodos de visualização, nomeadamente o \textbf{\textit{ROC Curve}}, \textbf{\textit{Scatter Plot (JavaScript – Legacy)}} e \textbf{\textit{Box Plots}}, permitindo analisar a distribuição das classificações e a capacidade discriminativa do modelo.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{imagem31}
+    \caption{Árvore de Decisão}
+    \label{imagem_31}
+\end{figure}
+\FloatBarrier
+
+\subsection{Segmentação \textit{K-Means}}
+O modelo \textit{K-Means} inicia‑se com o nodo \textbf{\textit{CSV Reader}}, que importa o ficheiro com os dados já pré‑processados, seguido do \textbf{\textit{Column Filter}}, onde são escolhidas apenas as variáveis numéricas relevantes para o \textit{clustering} excluindo a coluna “\textit{ratio\_target}” para manter a natureza não supervisionada do método.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.4\textwidth]{imagem32}
+    \caption{Nodo \textit{Column Filter}, utilizado para selecionar os atributos relevantes da base de dados}
+    \label{imagem_32}
+\end{figure}
+\FloatBarrier
+\par Os dados filtrados alimentam o nodo \textbf{\textit{K-Means}}, no qual foi definido K = 3 para obter três grupos coerentes com as classes clínicas standard, pré‑diabetes e diabetes. Em seguida, o nodo \textbf{\textit{Cluster Assigner}} atribui a cada indivíduo o cluster correspondente, adicionando uma nova coluna “\textit{cluster}" à tabela.
+\par A qualidade da segmentação é avaliada com o nodo \textbf{\textit{Silhouette Coefficient}}, que calcula o coeficiente médio de silhueta como medida de coesão \textit{intra‑cluster} e separação entre \textit{clusters}. Para relacionar os \textit{clusters} com as categorias reais de diabetes, utiliza‑se o nodo \textbf{\textit{Joiner}} para combinar a informação de “\textit{clusters}” com a tabela original (através do “\textit{RowID}”) e o \textbf{\textit{Rule Engine}} para mapear cada \textit{cluster} para uma classe prevista (Standard, Pré‑diabetes, Diabetes), criando uma coluna de previsão.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.6\textwidth]{imagem33}
+    \caption{Nodo \textit{Rule Engine}, utilizado para aplicar regras de decisão e thresholds às previsões do modelo}
+    \label{imagem_33}
+\end{figure}
+\FloatBarrier
+\par Por fim, o nodo \textbf{\textit{Scorer (JavaScript)}} compara a coluna “\textit{ratio\_target}” com a coluna de previsão derivada dos \textit{clusters}, gerando a matriz de confusão e métricas de desempenho, enquanto os nodos de visualização como \textbf{\textit{Color Manager}} e \textbf{\textit{Scatter Plot (JavaScript)}} permitem representar graficamente os grupos encontrados e apoiar a interpretação dos resultados.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{imagem34}
+    \caption{Segmentação \textit{K-Means}}
+    \label{imagem_34}
+\end{figure}
+\FloatBarrier
+
+
+\subsection{Regressão Logística}
+\par O \textit{workflow} utilizado inicia-se com o nodo \textbf{\textit{CSV Reader}}, seguido de um \textbf{\textit{Table Partitioner}} configurado para realizar uma divisão aleatória dos dados, utilizando 80\% para treino e 20\% para teste. 
+O treino do modelo é efetuado através do nodo \textbf{\textit{Logistic Regression Learner}}, configurado para classificação. Uma vez que existem três classes possíveis, foi necessário definir uma \textit{reference category}. Esta escolha foi realizada com base no desempenho inicial do modelo sem \textit{thresholds}, tendo sido selecionada a classe pré-diabetes, por apresentar o melhor \textit{score} global nesta fase inicial.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{imagem35}
+    \caption{Nodo \textit{Logistic Regression Learner}, utilizado para o treino de um modelo de regressão logística}
+    \label{imagem_35}
+\end{figure}
+\FloatBarrier
+\par Após o treino, o modelo é aplicado ao conjunto de teste através do nodo \textbf{\textit{Logistic Regression Predictor}}. Para permitir a aplicação posterior de \textit{thresholds} às probabilidades associadas a cada classe, foi necessário configurar o \textbf{\textit{Logistic Regression Predictor}} com a opção de \textit{suffix}, garantindo que as probabilidades de todas as classes ficassem disponíveis como colunas distintas. 
+\par Seguidamente, é utilizado um \textbf{\textit{Rule Engine}}, onde são definidos \textit{thresholds} específicos para cada uma das classes (diabetes, pré-diabetes e standard). Estes \textit{thresholds} foram ajustados experimentalmente com o objetivo de minimizar o erro global do modelo, dando particular atenção à redução de classificações clinicamente mais críticas. Foi ainda introduzida uma classe adicional designada por “incerto”, atribuída aos casos que não satisfazem nenhum dos \textit{thresholds} definidos.
+\par Os resultados são avaliados antes e depois da aplicação dos \textit{thresholds} através de nodos \textbf{\textit{Scorer}}, permitindo comparar diretamente o impacto das regras no desempenho do modelo. Complementarmente, foram utilizados nodos \textbf{\textit{Box Plot (Legacy)}} para analisar graficamente a distribuição das probabilidades previstas.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{imagem36}
+    \caption{Regressão Logística}
+    \label{imagem_36}
+\end{figure}
+\FloatBarrier
+
+
+\subsection{Random Forest}
+\par Para a construção do modelo de \textit{Random Forest}, foram utilizados dois nodos principais: o \textbf{\textit{Random Forest Learner}} e o \textbf{\textit{Random Forest Predictor}}. O processo iniciou-se com a divisão aleatória do \textit{dataset} através do nodo \textbf{\textit{Table Partitioner}}, configurado para separar os dados em 80\% para treino e 20\% para teste. A primeira saída deste nodo corresponde ao conjunto de treino, enquanto a segunda saída contém o conjunto de teste.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.4\textwidth]{imagem37}
+    \caption{Nodo \textit{Table Partitioning} e respetiva configuração}
+    \label{imagem_37}
+\end{figure}
+\FloatBarrier
+\par O conjunto de treino foi ligado ao nodo \textbf{\textit{Random Forest Learner}}, responsável pelo treino do modelo de classificação, sendo definido o atributo \textit{target} como a variável a prever. Este algoritmo baseia-se na criação de um conjunto de árvores de decisão, geradas a partir de diferentes subconjuntos dos dados e dos atributos, permitindo reduzir o risco de sobreajuste e aumentar a robustez do modelo.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.4\textwidth]{imagem38}
+    \caption{Nodo \textit{Random Forest Learner} e respetiva configuração}
+    \label{imagem_38}
+\end{figure}
+\FloatBarrier
+\par Após o treino, o modelo gerado foi utilizado pelo nodo \textbf{\textit{Random Forest Predictor}}, cuja função consiste em aplicar o classificador previamente treinado a novos dados. A primeira entrada deste nodo foi conectada à saída do \textbf{\textit{Random Forest Learner}}, que contém o modelo treinado, enquanto a segunda entrada foi ligada à saída do \textbf{\textit{Table Partitioner}} correspondente aos dados de teste. Desta forma, o modelo \textit{Random Forest} foi aplicado ao conjunto de teste, permitindo obter as previsões do atributo \textit{target} para cada instância.
+\par As previsões obtidas possibilitaram posteriormente a avaliação do desempenho do modelo através dos nodos de validação e visualização, concluindo assim o processo de construção, aplicação e análise do modelo de \textit{Random Forest}.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.4\textwidth]{imagem39}
+    \caption{Nodo \textit{Random Forest Predictor}}
+    \label{imagem_39}
+\end{figure}
+\FloatBarrier
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.4\textwidth]{imagem40}
+    \caption{\textit{Random Forest}}
+    \label{imagem_40}
+\end{figure}
+\FloatBarrier
+%===========================================================================================================================================================================================================
+\newpage
+\section{Desenvolvimento dos algoritmos de aprendizagem}
+\subsection{Aprendizagem supervisionada}
+\par \noindent \textbf{\textit{Redes Neuronais (RProp)}}
+\par Na avaliação inicial do modelo de Redes Neuronais (RProp), sem aplicação de \textit{thresholds}, observou-se um total de 13 classificações incorretas, correspondendo a uma taxa de erro de aproximadamente 7,9\%. Analisando a matriz de confusão, verificou-se a presença de erros clinicamente indesejáveis, nomeadamente casos em que indivíduos pré-diabéticos eram classificados como standard ou como diabéticos, o que representa uma atribuição inadequada do nível de risco.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{imagem41}
+    \caption{Matriz de confusão do modelo Redes Neuronais sem aplicação de \textit{thresholds}}
+    \label{imagem_41}
+\end{figure}
+\FloatBarrier
+\par Com a aplicação dos \textit{thresholds}, o erro total manteve-se inalterado, continuando a verificar-se 13 classificações incorretas. No entanto, apesar de não se observar uma melhoria ao nível do erro global ou da \textit{accuracy}, registou-se uma alteração relevante na distribuição dos erros. Em particular, alguns casos anteriormente classificados incorretamente como pertencentes a uma classe clínica específica passaram a ser classificados como “incertos”, refletindo uma maior cautela do modelo na tomada de decisão.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{imagem42}
+    \caption{Matriz de confusão do modelo Redes Neuronais com aplicação de \textit{thresholds}}
+    \label{imagem_42}
+\end{figure}
+\FloatBarrier
+\par Esta situação verifica-se quando as probabilidades previstas para um determinado indivíduo não satisfazem nenhum dos \textit{thresholds} definidos para as classes diabetes, pré-diabetes ou standard. A introdução da classe “incerto” permitiu, assim, evitar classificações forçadas em situações ambíguas, tornando o modelo mais conservador e transparente quanto às suas limitações. Embora fosse possível eliminar esta classe intermédia, tal conduziria a uma redistribuição dos erros pelas restantes classes, sem benefícios ao nível do desempenho global.
+\par A análise dos \textbf{\textit{ROC Curve}} e \textbf{\textit{Box Plots}} confirmou que a aplicação dos \textit{thresholds} não teve impacto significativo na capacidade discriminativa global do modelo, mas contribuiu para uma gestão mais cuidadosa dos casos ambíguos. Desta forma, conclui-se que, no modelo de Redes Neuronais (RProp), a aplicação de \textit{thresholds} não melhorou o erro total, mas permitiu uma reorganização qualitativa dos erros, alinhada com uma abordagem mais conservadora e clinicamente prudente.
+
+\vspace{0.5cm}
+\par \noindent \textbf{\textit{Árvore de Decisão}}
+\par Na avaliação inicial do modelo de Árvore de Decisão, sem aplicação de \textit{thresholds}, verificou-se um erro total relativamente baixo. No entanto, com a presença de erros clinicamente indesejáveis, em particular casos em que indivíduos pertencentes às classes de diabetes ou pré-diabetes eram classificados como standard, este tipo de erro foi considerado prioritário de reduzir, uma vez que representa uma subavaliação do risco clínico do indivíduo.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{imagem43}
+    \caption{Matriz de confusão do modelo Árvore de Decisão sem aplicação de \textit{thresholds}}
+    \label{imagem_43}
+\end{figure}
+\FloatBarrier
+\par Com a aplicação dos \textit{thresholds} foram realizadas várias tentativas de ajuste, procurando reduzir estes falsos negativos sem comprometer o desempenho global do modelo. No entanto, verificou-se que a variação dos \textit{thresholds} não conduziu a melhorias efetivas no erro total, nem permitiu reduzir os erros mais críticos sem introduzir outros problemas, como o aumento do número de classificações incertas ou a redistribuição dos erros para outras classes.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{imagem44}
+    \caption{Matriz de confusão do modelo Árvore de Decisão com aplicação de \textit{thresholds}}
+    \label{imagem_44}
+\end{figure}
+\FloatBarrier
+\par Desta forma, a solução inicialmente obtida, sem ajustes significativos nos \textit{thresholds}, foi considerada a mais adequada. Esta decisão é justificada pelo facto de as Árvores de Decisão basearem as suas previsões em regras explícitas e hierárquicas, o que limita o impacto de ajustes posteriores baseados apenas em probabilidades.
+\par A análise das \textbf{\textit{curvas ROC}}, dos \textbf{\textit{Scatter Plots}} e dos \textbf{\textit{Box Plots}} confirmou a estabilidade do modelo e a ausência de ganhos relevantes com a aplicação de \textit{thresholds}. Assim, o modelo de Árvore de Decisão apresentou um desempenho consistente e interpretável, embora menos flexível a ajustes quando comparado com modelos probabilísticos como a Regressão Logística ou as Redes Neuronais.
+
+
+\vspace{0.5cm}
+\par \noindent \textbf{\textit{Regressão Logística}}
+\par Na avaliação inicial do modelo de Regressão Logística, sem aplicação de \textit{thresholds}, verificou-se um erro total de 23 classificações incorretas, com especial incidência em casos em que indivíduos pré-diabéticos eram classificados como standard, uma situação considerada clinicamente indesejável.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{imagem45}
+    \caption{Matriz de confusão do modelo Regressão Logística sem aplicação de \textit{thresholds}}
+    \label{imagem_45}
+\end{figure}
+\FloatBarrier
+\par Com a introdução dos \textit{thresholds}, o número de classificações incorretas reduziu para 17, representando uma melhoria significativa do desempenho global do modelo. Esta redução esteve principalmente associada à diminuição dos falsos positivos e falsos negativos mais críticos, em particular na distinção entre indivíduos standard e pré-diabéticos.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{imagem46}
+    \caption{Matriz de confusão do modelo Regressão Logística com aplicação de \textit{thresholds}}
+    \label{imagem_46}
+\end{figure}
+\FloatBarrier
+\par Apesar da aplicação dos \textit{thresholds} ter levado a um ligeiro aumento de erro em categorias menos sensíveis, esta troca revelou-se aceitável, uma vez que permitiu reduzir erros com maior impacto clínico. Assim, a estratégia adotada privilegiou a segurança e a coerência clínica das classificações em detrimento de uma otimização puramente numérica do erro total.
+\par A análise gráfica através dos \textbf{\textit{Box Plots}} confirmou o efeito dos \textit{thresholds} na redistribuição das probabilidades e na separação entre classes. Conclui-se, assim, que a aplicação de \textit{thresholds} no modelo de Regressão Logística multiclasse contribuiu para uma melhoria do desempenho e para uma tomada de decisão mais alinhada com os objetivos clínicos do problema.
+
+
+\vspace{0.5cm}
+\par \noindent \textbf{\textit{\textit{Random Forest}}}
+\par Para avaliar a qualidade do modelo \textit{Random Forest}, foram utilizados os nodos \textbf{\textit{Scorer}} e \textbf{\textit{ROC Curve}}. O nodo \textbf{\textit{Scorer}} permite comparar os valores reais do atributo \textit{target} com os valores previstos pelo modelo, produzindo a respetiva matriz de confusão, bem como métricas estatísticas relevantes.
+Numa primeira abordagem, o desempenho do modelo foi avaliado considerando diretamente a classe com maior probabilidade prevista.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{imagem47}
+    \caption{Matriz de confusão do modelo \textit{Random Forest} sem aplicação de \textit{thresholds}}
+    \label{imagem_47}
+\end{figure}
+\FloatBarrier
+\par A análise desta matriz evidencia que a classe Standard é corretamente identificada na maioria dos casos. No entanto, verifica-se a existência de falsos negativos, particularmente nas classes Prediabetes e Diabetes, onde alguns pacientes pertencentes a estas categorias são incorretamente classificados como Standard ou como outra classe metabólica. Este tipo de erro é especialmente crítico em contextos clínicos, uma vez que pode conduzir à não identificação de indivíduos em risco ou com patologia instalada.
+\par Globalmente, o modelo classificou corretamente 144 instâncias, apresentando uma \textit{accuracy} de 87,805\% e um coeficiente de Cohen (k = 0,69\%), indicando uma concordância substancial, embora com margem para melhoria na redução dos erros de classificação mais críticos.
+\par A introdução dos \textit{thresholds} permitiu tornar o processo de decisão mais conservador, reduzindo a probabilidade de classificar incorretamente pacientes com Prediabetes ou Diabetes como Standard.
+\par Os resultados obtidos, apresentados na \textit{figura \ref{imagem_48}}, demonstram uma melhoria clara do desempenho do modelo. O número de instâncias corretamente classificadas aumentou para 149, enquanto o número de classificações incorretas diminuiu para 15, correspondendo a uma \textit{accuracy} de 90,854\% e a um coeficiente de Cohen (k = 0,785\%).
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{imagem48}
+    \caption{Matriz de confusão do modelo \textit{Random Forest} com aplicação de \textit{thresholds}}
+    \label{imagem_48}
+\end{figure}
+\FloatBarrier
+\par De forma particularmente relevante, observa-se uma redução significativa dos falsos negativos, sobretudo nas classes Prediabetes e Diabetes. 
+\par Este aspeto é fundamental do ponto de vista clínico, uma vez que a diminuição de falsos negativos contribui para uma melhor identificação de indivíduos em risco metabólico, reduzindo a probabilidade de omissão de casos que requerem acompanhamento ou intervenção médica.
+
+
+\subsection{Aprendizagem não supervisionada}
+\par \noindent \textbf{\textit{Segmentação \textit{K-Means}}}
+\par Na avaliação do modelo de Segmentação \textit{K-Means} com K=3 \textit{clusters}, observou-se que os resultados demonstram limitações fundamentais da abordagem não-supervisionada quando aplicada a classificação clínica. O modelo dividiu o conjunto de dados em três \textit{clusters} baseado em características biomédicas (colesterol, glucose, HbA1c, medidas antropométricas), mapeando-os posteriormente para as categorias clínicas através do \textbf{\textit{Rule Engine}}.
+\par A Matriz de Confusão revelou um desempenho global deficiente, com \textit{Accuracy} de apenas 44.12\%. O modelo foi incapaz de discriminar entre as três classes, demonstrando um enviesamento sistemático: nunca previu "Diabetes" ou "Pré-diabetes" corretamente, classificando quase todos os casos como "Standard". Este padrão é clinicamente indesejável, representando uma subestimação crítica do risco diabético.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{imagem49}
+    \caption{Nodo \textit{Scorer}, utilizado para avaliar o desempenho do modelo através da matriz de confusão e métricas de classificação}
+    \label{imagem_49}
+\end{figure}
+\FloatBarrier
+\par A Segmentação \textit{K-Means} mostrou-se inadequado para previsão de diabetes, pois a sua dependência da geometria euclidiana não se alinha com as fronteiras clínicas definidas biologicamente. A abordagem não-supervisionada não se recomenda como método primário para classificação médica neste contexto.
+
+%===========================================================================================================================================================================================================
+\newpage
+\section{Comparação entre Modelo Multiclasse e Modelo Binário}
+\par Com o objetivo de reduzir o erro de classificação, em particular o número de falsos negativos, foi considerada uma abordagem alternativa baseada na simplificação do atributo \textit{target}. Nesta abordagem, as classes Pré-diabetes e Diabetes foram agregadas numa única classe designada por Condição Diabética, resultando num problema de classificação binária, em oposição à classificação multiclasse inicialmente adotada.
+\vspace{0.5cm}
+\par \noindent \textbf{\textit{Motivação para a abordagem binária}}
+\par Na classificação multiclasse, o modelo é obrigado a distinguir entre estados metabólicos clinicamente próximos, como Prediabetes e Diabetes, o que aumenta a probabilidade de confusão entre estas classes. Embora tais erros possam ser aceitáveis do ponto de vista estatístico, do ponto de vista clínico são menos críticos do que a classificação incorreta de um indivíduo com alteração metabólica como Standard.
+Ao agregar as classes Pré-diabetes e Diabetes numa única categoria, o modelo passa a focar-se na distinção entre:
+\begin{itemize}
+    \item indivíduos metabolicamente normais (Standard);
+    \item indivíduos com algum grau de alteração glicémica (Condição Diabética).
+\end{itemize}
+\par Esta reformulação permite reduzir significativamente o risco de falsos negativos, isto é, casos em que pacientes com alteração metabólica são incorretamente classificados como saudáveis.
+
+\vspace{0.5cm}
+\par \noindent \textbf{\textit{Vantagens da substituição para classificação binária}}
+\par A adoção da classificação binária apresenta várias vantagens relevantes:
+\begin{itemize}
+    \item \textbf{Redução dos falsos negativos}: ao eliminar a distinção final entre Pré-diabetes e Diabetes, o modelo torna-se mais sensível à deteção de qualquer condição diabética, reduzindo a probabilidade de não identificar indivíduos em risco.
+    \item \textbf{Maior sensibilidade clínica}: em contextos médicos, é preferível identificar um paciente como potencialmente diabético e encaminhá-lo para avaliação adicional do que classificá-lo incorretamente como saudável.
+    \item \textbf{Simplificação do problema de aprendizagem}: a redução do número de classes diminui a complexidade do modelo, facilitando o processo de aprendizagem e melhorando a estabilidade das previsões.
+    \item \textbf{Melhoria da interpretabilidade}: os resultados tornam-se mais fáceis de interpretar, especialmente em sistemas de apoio à decisão clínica, nos quais a distinção entre “risco” e “não risco” é frequentemente mais relevante.
+    \item \textbf{Melhoria potencial das métricas globais}: a simplificação pode conduzir a um aumento da \textit{accuracy}, da sensibilidade (\textit{recall}) e do valor da AUC, especialmente quando existe sobreposição entre as classes originais.
+\end{itemize}
+
+\newpage
+\par \noindent \textbf{\textit{Implementação no pré-processamento dos dados}}
+\par Esta alteração foi realizada durante a fase de pré-processamento, recorrendo ao nodo \textbf{\textit{Rule Engine}} da plataforma \textit{KNIME}. A regra definida permitiu mapear as classes Pré-diabetes e Diabetes para uma única categoria binária, mantendo a classe Standard inalterada.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{imagem50}
+    \caption{Nodo \textit{Rule Engine} e a sua configuração}
+    \label{imagem_50}
+\end{figure}
+\FloatBarrier
+\par Importa salientar que esta foi a única modificação introduzida no pré-processamento dos dados, garantindo que a comparação entre os modelos multiclasse e binário mantém-se justa e consistente, uma vez que todas as restantes etapas de preparação dos dados e configuração dos modelos permaneceram inalteradas.
+
+\subsection{Comparação do desempenho das Redes Neuronais (RProp): classificação binária vs multiclasse, com e sem \textit{threshold}}
+\par A análise comparativa entre as abordagens binária e multiclasse das Redes Neuronais (RProp) evidencia que o melhor desempenho é obtido na classificação binária com aplicação de \textit{thresholds}. Sem \textit{thresholds}, o modelo binário já apresenta um desempenho superior ao multiclasse (93,293\% > 92,073\%), registando um menor número de classificações incorretas (11 < 13) e maior estabilidade na distinção entre indivíduos standard e indivíduos com alteração metabólica.
+\par Com a introdução dos \textit{thresholds}, o modelo binário registou uma redução adicional do erro total, atingindo o melhor resultado observado para este algoritmo (4,878\%). Esta melhoria refletiu-se sobretudo na diminuição dos falsos positivos (10 para 7) clinicamente mais relevantes, reforçando a adequação do modelo para contextos de apoio à decisão clínica.
+\par No modelo multiclasse, a aplicação de \textit{thresholds} não conduziu a uma redução do erro total, mantendo-se o número de classificações incorretas. No entanto, verificou-se uma alteração qualitativa na distribuição dos erros, com a introdução da classe “incerto”, permitindo identificar explicitamente situações ambíguas em que o modelo não apresenta confiança suficiente para atribuir uma classe clínica específica.
+\par Assim, conclui-se que as Redes Neuronais (RProp) binárias com \textit{thresholds} apresentam o melhor compromisso entre desempenho e segurança clínica. Em contraste, a abordagem multiclasse, embora ofereça maior granularidade diagnóstica, demonstra maior sensibilidade a ambiguidades entre classes metabolicamente próximas, sendo menos robusta em termos de erro global.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth]{imagem51}
+    \caption{Nodo \textit{Scorer} do modelo Redes Neuronais (RProp) binário sem e com \textit{threshold}}
+    \label{imagem_51}
+\end{figure}
+\FloatBarrier
+
+\subsection{Comparação do desempenho das Árvores de Decisão: classificação binária vs multiclasse, com e sem \textit{threshold}}
+\par A análise comparativa do modelo de Árvore de Decisão revela diferenças marcadas entre as abordagens binária e multiclasse. Na classificação binária, o modelo apresentou o melhor desempenho global entre todos os modelos analisados (98,78\%), atingindo o menor erro total após a aplicação de \textit{thresholds} (1,22\%), com especial destaque para a redução dos falsos negativos (3 para 1) clinicamente mais críticos.
+\par Por outro lado, na abordagem multiclasse, a Árvore de Decisão demonstrou uma menor sensibilidade à aplicação de \textit{thresholds}. Apesar de várias tentativas de ajustamento, não se observaram melhorias significativas no erro total nem na redução dos erros mais críticos, sendo a configuração inicial considerada a mais adequada.
+\par Desta forma, a Árvore de Decisão binária revelou-se particularmente eficaz e robusta, beneficiando da sua natureza baseada em regras explícitas. Em contraste, a abordagem multiclasse, embora interpretável, mostrou-se menos flexível e menos eficaz na distinção entre classes metabolicamente próximas.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth]{imagem52}
+    \caption{Nodo \textit{Scorer} do modelo Árvore de Decisão binário sem e com \textit{threshold}}
+    \label{imagem_52}
+\end{figure}
+\FloatBarrier
+
+\subsection{Comparação do desempenho da Regressão Logística: classificação binária vs multiclasse, com e sem \textit{threshold}}
+\par A análise comparativa evidencia que a classificação binária apresenta desempenho superior à multiclasse, com aplicação de threshold. Sem threshold, o modelo binário alcança uma \textit{accuracy} de 86,585\%, superando o modelo multiclasse (85,976\%), com uma redução do erro global (de 14,024\% para 13,415\%), refletindo sobretudo uma diminuição do número de falsos negativos.
+\par A aplicação de threshold probabilístico melhora o desempenho em ambas as abordagens. No modelo multiclasse, a \textit{accuracy} aumenta para 89,634\% e o coeficiente de Cohen passa de 0,65 para 0,764, indicando maior concordância. No modelo binário, o impacto é mais expressivo, com a \textit{accuracy} a atingir 92,683\%, o erro a reduzir-se para 7,317\% e um coeficiente de Cohen de 0,821, correspondente a uma boa concordância.
+\par De forma global, conclui-se que a Regressão Logística binária com \textit{thresholds} apresenta o melhor compromisso entre desempenho, robustez e segurança clínica, enquanto a abordagem multiclasse, apesar de fornecer maior granularidade diagnóstica, revela limitações na separação consistente entre múltiplas classes.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth]{imagem53}
+    \caption{Nodo \textit{Scorer} do modelo Regressão Logística binário sem e com \textit{threshold}}
+    \label{imagem_53}
+\end{figure}
+\FloatBarrier
+
+\subsection{Comparação do desempenho do modelo Random Forest: multiclasse vs binário, com e sem \textit{threshold}}
+\par A análise comparativa evidencia que a classificação binária apresenta desempenho superior à multiclasse, tanto com como sem aplicação de \textit{threshold}. Sem \textit{threshold}, o modelo binário alcança uma \textit{accuracy} de 93,293\%, superando o modelo multiclasse (87,805\%), com uma redução significativa do erro global (de 12,195\% para 6,707\%), refletindo sobretudo uma diminuição do número de falsos negativos.
+\par A aplicação de \textit{threshold} probabilístico melhora o desempenho em ambas as abordagens. No modelo multiclasse, a \textit{accuracy} aumenta para 90,854\% e o coeficiente de Cohen passa de 0,69 para 0,785, indicando maior concordância. No modelo binário, o impacto é mais expressivo, com a \textit{accuracy} a atingir 96,341\%, o erro a reduzir-se para 3,659\% e um coeficiente de Cohen de 0,909, correspondente a uma concordância quase perfeita.
+\par De forma global, a abordagem binária com \textit{threshold} apresenta o melhor compromisso entre desempenho e segurança clínica, ao maximizar a deteção de indivíduos com alteração metabólica. Em contrapartida, a abordagem multiclasse oferece maior granularidade diagnóstica, embora com menor robustez na distinção entre classes metabolicamente próximas.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth]{imagem54}
+    \caption{Nodo \textit{Scorer} do modelo \textit{Random Forest} binário sem e com \textit{threshold}}
+    \label{imagem_54}
+\end{figure}
+\FloatBarrier
+%===========================================================================================================================================================================================================
+
+\newpage
+\section{Seleção do algoritmo mais preciso}
+\par Uma etapa fundamental deste trabalho consiste na análise comparativa dos resultados obtidos pelos diferentes algoritmos de aprendizagem automática implementados. Desta forma, considerando exclusivamente os modelos de classificação multiclasse, conclui-se que o algoritmo que apresentou o melhor desempenho global foi o modelo de Árvore de Decisão.
+\par Após a avaliação das métricas de desempenho e da análise das matrizes de confusão dos vários modelos multiclasse testados, verificou-se que a Árvore de Decisão apresentou o menor erro total (6,707\%), bem como uma distribuição de erros mais coerente do ponto de vista clínico. Em particular, este modelo demonstrou uma maior capacidade de distinguir corretamente entre indivíduos standard, pré-diabéticos e diabéticos, reduzindo classificações clinicamente mais críticas quando comparado com os restantes algoritmos.
+\par Para além do desempenho quantitativo, a Árvore de Decisão destacou-se também pela sua estabilidade face à aplicação de \textit{thresholds}, uma vez que alterações nos parâmetros não conduziram a degradações significativas do desempenho global. Esta característica revela uma maior robustez do modelo, sobretudo quando comparada com modelos probabilísticos, que apresentaram maior sensibilidade a ambiguidades entre classes metabolicamente próximas.
+\par Adicionalmente, a natureza interpretável da Árvore de Decisão constitui uma vantagem relevante no contexto biomédico, permitindo compreender de forma explícita as regras de decisão utilizadas pelo modelo. Esta transparência facilita a validação clínica dos resultados e reforça a confiança na utilização do modelo como ferramenta de apoio à decisão.
+\par Assim, tendo em conta o conjunto das métricas analisadas, a coerência clínica dos resultados e a interpretabilidade do modelo, conclui-se que a Árvore de Decisão é o algoritmo mais preciso e adequado para a base de dados e o problema em estudo.
+
+%===========================================================================================================================================================================================================
+\newpage
+\section{Conclusão}
+\par O presente trabalho teve como objetivo o desenvolvimento e avaliação de um sistema de apoio à decisão clínica para a classificação do estado glicémico de indivíduos, recorrendo a técnicas de Inteligência Artificial e Aprendizagem Automática, implementadas na plataforma \textit{KNIME Analytics Platform}. Para o efeito, foi utilizada uma base de dados biomédica composta por variáveis clínicas, antropométricas e laboratoriais relevantes para o estudo da diabetes.
+\par A análise exploratória e o pré-processamento dos dados revelaram-se etapas fundamentais, permitindo identificar e corrigir inconsistências, tratar valores em falta, normalizar variáveis e preparar adequadamente os dados para a fase de modelação. Estas etapas contribuíram de forma significativa para a melhoria da qualidade dos dados e para o desempenho dos modelos desenvolvidos.
+Foram implementados diversos algoritmos de aprendizagem automática, incluindo Redes Neuronais Artificiais (RProp), Árvores de Decisão, Regressão Logística, \textit{Random Forest} e o método não supervisionado Segmentação. Os resultados evidenciaram que os modelos supervisionados apresentaram um desempenho claramente superior ao da Segmentação, o qual se mostrou inadequado para classificação clínica neste contexto.
+\par A aplicação de \textit{thresholds} probabilísticos revelou-se uma estratégia eficaz na redução de erros clinicamente críticos, permitindo introduzir a classe “incerto” em situações de maior ambiguidade. Adicionalmente, a reformulação do problema para uma abordagem de classificação binária demonstrou melhorias consistentes ao nível da \textit{accuracy}, da sensibilidade e da concordância global, reduzindo o risco de falsos negativos e aumentando a segurança clínica das previsões.
+\par Considerando os modelos multiclasse, a Árvore de Decisão destacou-se como o algoritmo com melhor desempenho global, tendo um baixo erro de classificação, estabilidade e elevada interpretabilidade, uma característica particularmente relevante em aplicações biomédicas. De forma global, os resultados obtidos demonstram o potencial da Aprendizagem Automática como ferramenta de apoio à decisão clínica na identificação de alterações metabólicas associadas à diabetes.
+
+
+\end{document}

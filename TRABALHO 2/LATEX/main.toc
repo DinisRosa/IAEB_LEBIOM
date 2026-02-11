@@ -1,0 +1,35 @@
+\babel@toc {portuguese}{}\relax 
+\contentsline {section}{\numberline {1}Resumo}{1}{}%
+\contentsline {section}{\numberline {2}Introdução}{3}{}%
+\contentsline {section}{\numberline {3}Preliminares}{4}{}%
+\contentsline {subsection}{\numberline {3.1}Inteligência Artificial e \textit {Machine Learning}}{4}{}%
+\contentsline {subsubsection}{\numberline {3.1.1}Aprendizagem Supervisionada}{4}{}%
+\contentsline {subsubsection}{\numberline {3.1.2}Aprendizagem Não Supervisionada}{5}{}%
+\contentsline {subsubsection}{\numberline {3.1.3}Aprendizagem por Reforço}{6}{}%
+\contentsline {subsection}{\numberline {3.2}Plataforma \textit {KNIME}}{6}{}%
+\contentsline {subsection}{\numberline {3.3}Métricas de Qualidade e Avaliação do Modelo}{6}{}%
+\contentsline {subsubsection}{\numberline {3.3.1}Métricas para Classificação}{6}{}%
+\contentsline {subsubsection}{\numberline {3.3.2}Métricas para Regressão}{8}{}%
+\contentsline {section}{\numberline {4}Desenvolvimento do Sistema de Aprendizagem}{9}{}%
+\contentsline {subsection}{\numberline {4.1}Base de conhecimento}{9}{}%
+\contentsline {subsection}{\numberline {4.2}Carregamento dos dados}{10}{}%
+\contentsline {subsection}{\numberline {4.3}Exploração e análise de dados}{11}{}%
+\contentsline {subsection}{\numberline {4.4}Pré-processamento dos dados}{12}{}%
+\contentsline {subsection}{\numberline {4.5}Processamento de Dados}{21}{}%
+\contentsline {subsection}{\numberline {4.6}Visualização dos Resultados}{23}{}%
+\contentsline {section}{\numberline {5}Modelos de Aprendizagem}{25}{}%
+\contentsline {subsection}{\numberline {5.1}Redes Neuronais (RProp)}{25}{}%
+\contentsline {subsection}{\numberline {5.2}Árvore de Decisão}{27}{}%
+\contentsline {subsection}{\numberline {5.3}Segmentação \textit {K-Means}}{28}{}%
+\contentsline {subsection}{\numberline {5.4}Regressão Logística}{30}{}%
+\contentsline {subsection}{\numberline {5.5}Random Forest}{31}{}%
+\contentsline {section}{\numberline {6}Desenvolvimento dos algoritmos de aprendizagem}{34}{}%
+\contentsline {subsection}{\numberline {6.1}Aprendizagem supervisionada}{34}{}%
+\contentsline {subsection}{\numberline {6.2}Aprendizagem não supervisionada}{38}{}%
+\contentsline {section}{\numberline {7}Comparação entre Modelo Multiclasse e Modelo Binário}{39}{}%
+\contentsline {subsection}{\numberline {7.1}Comparação do desempenho das Redes Neuronais (RProp): classificação binária vs multiclasse, com e sem \textit {threshold}}{40}{}%
+\contentsline {subsection}{\numberline {7.2}Comparação do desempenho das Árvores de Decisão: classificação binária vs multiclasse, com e sem \textit {threshold}}{41}{}%
+\contentsline {subsection}{\numberline {7.3}Comparação do desempenho da Regressão Logística: classificação binária vs multiclasse, com e sem \textit {threshold}}{41}{}%
+\contentsline {subsection}{\numberline {7.4}Comparação do desempenho do modelo Random Forest: multiclasse vs binário, com e sem \textit {threshold}}{42}{}%
+\contentsline {section}{\numberline {8}Seleção do algoritmo mais preciso}{43}{}%
+\contentsline {section}{\numberline {9}Conclusão}{44}{}%
